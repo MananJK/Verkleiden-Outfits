@@ -4,6 +4,7 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Card } from "./ui/card";
 import { MessageCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface Message {
   text: string;
@@ -11,6 +12,7 @@ interface Message {
 }
 
 const Chatbot = () => {
+  const navigate = useNavigate();
   const [messages, setMessages] = useState<Message[]>([
     {
       text: "Hi! I'm your personal style assistant. What occasion are you dressing for today?",
@@ -18,6 +20,7 @@ const Chatbot = () => {
     },
   ]);
   const [input, setInput] = useState("");
+  const [step, setStep] = useState<"occasion" | "preferences">("occasion");
 
   const handleSend = () => {
     if (!input.trim()) return;
@@ -25,16 +28,33 @@ const Chatbot = () => {
     setMessages([...messages, { text: input, isBot: false }]);
     setInput("");
 
-    // Simulate bot response
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          text: "I'll help you find the perfect outfit for that occasion! Could you tell me your style preferences (casual, formal, etc.)?",
-          isBot: true,
-        },
-      ]);
-    }, 1000);
+    if (step === "occasion") {
+      setTimeout(() => {
+        setMessages((prev) => [
+          ...prev,
+          {
+            text: "Great! Could you tell me your style preferences (casual, formal, etc.)?",
+            isBot: true,
+          },
+        ]);
+        setStep("preferences");
+      }, 1000);
+    } else if (step === "preferences") {
+      // After getting style preferences, simulate processing and redirect
+      setTimeout(() => {
+        setMessages((prev) => [
+          ...prev,
+          {
+            text: "Thanks! I'm generating your personalized outfit recommendations...",
+            isBot: true,
+          },
+        ]);
+        // Redirect to recommendations page after a short delay
+        setTimeout(() => {
+          navigate("/recommendations");
+        }, 2000);
+      }, 1000);
+    }
   };
 
   return (
