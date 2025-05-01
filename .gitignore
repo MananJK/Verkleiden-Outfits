@@ -7,16 +7,42 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
+# Node modules (frontend)
+node_modules/
+
+# Vite cache and bundler artifacts
+dist/
 dist-ssr
+bun.lockb
+
+# Environment variables
+.env
 *.local
+
+# Python cache files
+__pycache__/
+*.py[cod]
+
+# Persistent model artifacts and preprocessors
+outfit_recommender_model/
+*.pkl
+
+# Dataset files (sensitive CSVs)
+*.csv
+
+# Virtual environment folders
+env/
+venv/
+
+# Flask instance folder
+instance/
 
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
 .idea
 .DS_Store
+Thumbs.db
 *.suo
 *.ntvs*
 *.njsproj

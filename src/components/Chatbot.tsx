@@ -1,10 +1,10 @@
-
 import { useState } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Card } from "./ui/card";
 import { MessageCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "@/components/ui/sonner";
 
 interface Message {
   text: string;
@@ -14,47 +14,44 @@ interface Message {
 const Chatbot = () => {
   const navigate = useNavigate();
   const [messages, setMessages] = useState<Message[]>([
-    {
-      text: "Hi! I'm your personal style assistant. What occasion are you dressing for today?",
-      isBot: true,
-    },
+    { text: "What kind of clothing do you need today? Options: Formal, Wedding, Casual, Party, Traditional", isBot: true }
   ]);
   const [input, setInput] = useState("");
-  const [step, setStep] = useState<"occasion" | "preferences">("occasion");
+  const [loading, setLoading] = useState<boolean>(false);
 
   const handleSend = () => {
     if (!input.trim()) return;
 
-    setMessages([...messages, { text: input, isBot: false }]);
+    // add user message
+    setMessages((prev) => [...prev, { text: input.trim(), isBot: false }]);
     setInput("");
 
-    if (step === "occasion") {
-      setTimeout(() => {
-        setMessages((prev) => [
-          ...prev,
-          {
-            text: "Great! Could you tell me your style preferences (casual, formal, etc.)?",
-            isBot: true,
-          },
-        ]);
-        setStep("preferences");
-      }, 1000);
-    } else if (step === "preferences") {
-      // After getting style preferences, simulate processing and redirect
-      setTimeout(() => {
-        setMessages((prev) => [
-          ...prev,
-          {
-            text: "Thanks! I'm generating your personalized outfit recommendations...",
-            isBot: true,
-          },
-        ]);
-        // Redirect to recommendations page after a short delay
-        setTimeout(() => {
-          navigate("/recommendations");
-        }, 2000);
-      }, 1000);
-    }
+    // bot loading message
+    setMessages((prev) => [...prev, { text: "Generating recommendations...", isBot: true }]);
+    setLoading(true);
+
+    // call the backend
+    fetch('http://localhost:5000/api/recommendations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ occasion: input.trim().toLowerCase() }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setLoading(false);
+        if (data.success) {
+          localStorage.setItem('outfitRecommendations', JSON.stringify(data.outfits));
+          navigate('/recommendations');
+        } else {
+          toast.error(data.message || 'No recommendations found.');
+          setMessages((prev) => [...prev, { text: data.message || "Sorry, I couldn't find any outfits.", isBot: true }]);
+        }
+      })
+      .catch((err) => {
+        setLoading(false);
+        toast.error('Failed to fetch recommendations.');
+        setMessages((prev) => [...prev, { text: 'An error occurred. Please try again later.', isBot: true }]);
+      });
   };
 
   return (
@@ -87,9 +84,14 @@ const Chatbot = () => {
           onChange={(e) => setInput(e.target.value)}
           placeholder="Type your message..."
           onKeyPress={(e) => e.key === "Enter" && handleSend()}
+          disabled={loading}
         />
-        <Button onClick={handleSend} className="bg-primary hover:bg-primary/90">
-          Send
+        <Button 
+          onClick={handleSend} 
+          className="bg-primary hover:bg-primary/90"
+          disabled={loading}
+        >
+          {loading ? "..." : "Send"}
         </Button>
       </div>
     </Card>
